@@ -1,10 +1,22 @@
 import * as THREE from 'three';
+import { TextureLoader } from 'three';
+
+const texLoader = new TextureLoader();
 
 /**
  * Build the graybox district: street grid + buildings + roads + props.
  */
 export function buildWorld(scene) {
   const group = new THREE.Group();
+
+  // Pre-load building textures
+  const textures = {
+    warehouse: texLoader.load('/textures/warehouse.jpg'),
+    bar: texLoader.load('/textures/bar.jpg'),
+    office: texLoader.load('/textures/office.jpg'),
+    storefront: texLoader.load('/textures/storefront.jpg'),
+    bank: texLoader.load('/textures/bank_facade.jpg'),
+  };
 
   // ── Ground base ──
   const groundGeo = new THREE.PlaneGeometry(120, 120);
@@ -114,22 +126,20 @@ export function buildWorld(scene) {
 
   // ── Buildings ──
   const buildingData = [
-    { x: -18, z: -14, w: 8, d: 10, h: 12, color: 0x4a4a5a, name: 'Warehouse' },
-    { x: 14, z: -14, w: 7, d: 8, h: 15, color: 0x3a4a6a, name: 'Bar' },
-    { x: -14, z: 16, w: 9, d: 9, h: 10, color: 0x5a4a3a, name: 'Apartment' },
-    { x: 16, z: 16, w: 6, d: 6, h: 18, color: 0x4a3a5a, name: 'Office' },
-    // Bank (gold/bronze, landmark building)
-    { x: -18, z: 18, w: 12, d: 10, h: 14, color: 0x887744, name: 'Bank' },
-    // 4 filler buildings
-    { x: 26, z: -20, w: 6, d: 5, h: 9, color: 0x555566, name: 'Shop' },
-    { x: -26, z: -22, w: 5, d: 6, h: 8, color: 0x4a4a5a, name: 'Laundry' },
-    { x: 24, z: 22, w: 6, d: 6, h: 10, color: 0x5a5a4a, name: 'Cafe' },
-    { x: -26, z: 24, w: 5, d: 5, h: 8, color: 0x4a5a5a, name: 'Bodega' },
+    { x: -18, z: -14, w: 8, d: 10, h: 12, color: 0x888888, tex: textures.warehouse, name: 'Warehouse' },
+    { x: 14, z: -14, w: 7, d: 8, h: 15, color: 0x888888, tex: textures.bar, name: 'Bar' },
+    { x: -14, z: 16, w: 9, d: 9, h: 10, color: 0x888888, tex: textures.storefront, name: 'Apartment' },
+    { x: 16, z: 16, w: 6, d: 6, h: 18, color: 0x888888, tex: textures.office, name: 'Office' },
+    { x: -18, z: 18, w: 12, d: 10, h: 14, color: 0x888888, tex: textures.bank, name: 'Bank' },
+    { x: 26, z: -20, w: 6, d: 5, h: 9, color: 0x888888, tex: textures.storefront, name: 'Shop' },
+    { x: -26, z: -22, w: 5, d: 6, h: 8, color: 0x888888, tex: textures.storefront, name: 'Laundry' },
+    { x: 24, z: 22, w: 6, d: 6, h: 10, color: 0x888888, tex: textures.storefront, name: 'Cafe' },
+    { x: -26, z: 24, w: 5, d: 5, h: 8, color: 0x888888, tex: textures.storefront, name: 'Bodega' },
   ];
 
   const interiors = [];
   buildingData.forEach((b) => {
-    const mesh = createBuilding(b.w, b.h, b.d, b.color);
+    const mesh = createBuilding(b.w, b.h, b.d, b.color, b.tex);
     mesh.position.set(b.x, b.h / 2, b.z);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -145,6 +155,16 @@ export function buildWorld(scene) {
     addLampPost(group, i * 2.5, 0, 14);
     addLampPost(group, -14, 0, i * 2.5);
     addLampPost(group, 14, 0, i * 2.5);
+  }
+
+  // ── Trees along streets ──
+  const treePositions = [
+    [-9, -14], [9, -14], [-9, 14], [9, 14],
+    [-14, -9], [-14, 9], [14, -9], [14, 9],
+    [-20, -14], [20, -14], [-20, 14], [20, 14],
+  ];
+  for (const [tx, tz] of treePositions) {
+    addTree(group, tx, tz);
   }
 
   // ── District boundaries ──
@@ -166,9 +186,27 @@ export function buildWorld(scene) {
   return { buildings: interiors, buildingData };
 }
 
-function createBuilding(w, h, d, color) {
+function addTree(group, x, z) {
+  // Trunk
+  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3a1a, roughness: 0.9 });
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 1.8, 6), trunkMat);
+  trunk.position.set(x, 0.9, z);
+  trunk.castShadow = true;
+  group.add(trunk);
+
+  // Canopy
+  const leafMat = new THREE.MeshStandardMaterial({ color: 0x2a6a2a, roughness: 0.8 });
+  const crown = new THREE.Mesh(new THREE.SphereGeometry(0.8, 6, 5), leafMat);
+  crown.position.set(x, 2.2, z);
+  crown.scale.y = 0.7;
+  crown.castShadow = true;
+  group.add(crown);
+}
+
+function createBuilding(w, h, d, color, texture) {
   const mat = new THREE.MeshStandardMaterial({
     color, roughness: 0.7, metalness: 0.1,
+    map: texture || undefined,
   });
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
 

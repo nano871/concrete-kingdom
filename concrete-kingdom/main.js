@@ -4,6 +4,9 @@ import { PlayerController, KEYS, STATE } from './player.js';
 import { PoliceController } from './police.js';
 import { BusinessSystem } from './business.js';
 import { Vehicle } from './vehicle.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 // ── Setup ──
 const scene = new THREE.Scene();
@@ -27,6 +30,18 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 document.body.prepend(renderer.domElement);
+
+// ── Post-processing (bloom + glow) ──
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  0.15,   // strength
+  0.4,    // radius
+  0.85    // threshold
+);
+composer.addPass(bloomPass);
 
 // ── Lighting ──
 const ambient = new THREE.AmbientLight(0x404055, 0.4);
@@ -355,7 +370,7 @@ function gameLoop(time) {
   police.update(dt);
 
   // ── Render frame ──
-  renderer.render(scene, camera);
+  composer.render();
 
   // ── FPS ──
   frameCount++;
@@ -372,6 +387,7 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
 });
 
 // ── Start ──
