@@ -1,0 +1,49 @@
+[gd_scene load_steps=9 format=3 uid="uid://vehicle_scene"]
+
+[ext_resource type="Script" path="res://scripts/vehicle.gd" id="1"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6x7p"]
+size = Vector3(2, 0.8, 4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8k3p"]
+size = Vector3(1.8, 0.6, 3.8)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_9r2h"]
+albedo_color = Color(0.8, 0.13, 0.13, 1)
+roughness = 0.3
+metallic = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_4t6m"]
+size = Vector3(1.5, 0.35, 1.8)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2w9k"]
+albedo_color = Color(0.13, 0.13, 0.2, 0.7)
+roughness = 0.2
+metallic = 0.3
+transparency = 1
+alpha = 0.7
+
+[node name="Vehicle" type="CharacterBody3D"]
+script = ExtResource("1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_6x7p")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_8k3p")
+material_override = SubResource("StandardMaterial3D_9r2h")
+
+[node name="Cabin" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -0.3)
+mesh = SubResource("BoxMesh_4t6m")
+material_override = SubResource("StandardMaterial3D_2w9k")
+
+[node name="WheelFL" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 0.2, 1.2)
+[node name="WheelFR" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, 0.2, 1.2)
+[node name="WheelRL" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 0.2, -1.2)
+[node name="WheelRR" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, 0.2, -1.2)
+
+[node name="CameraMount" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 8)

@@ -1,0 +1,33 @@
+[gd_scene load_steps=9 format=3 uid="uid://player_scene"]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_t7x2f"]
+radius = 0.4
+height = 1.4
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_3g2h8"]
+top_radius = 0.4
+bottom_radius = 0.4
+height = 1.4
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r8x4k"]
+albedo_color = Color(0.27, 0.67, 1, 1)
+roughness = 0.3
+metallic = 0.1
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 20)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_t7x2f")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_3g2h8")
+material_override = SubResource("StandardMaterial3D_r8x4k")
+
+[node name="CameraPivot" type="Node3D" parent="."]
+[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, 4, 7)
+current = true
+fov = 65.0

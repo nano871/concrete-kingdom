@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CONCRETE KINGDOM — Graybox</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; background: #0a0a0a; font-family: monospace; }
+    canvas { display: block; }
+
+    #hud {
+      position: fixed; top: 0; left: 0; width: 100%;
+      pointer-events: none; padding: 12px 16px;
+      color: #ccc; font-size: 13px;
+      display: flex; justify-content: space-between;
+    }
+    #hud .left { text-align: left; }
+    #hud .right { text-align: right; }
+
+    #controls {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      pointer-events: none;
+      background: rgba(0,0,0,0.6); border: 1px solid #333;
+      padding: 10px 20px; border-radius: 6px;
+      color: #888; font-size: 12px; text-align: center;
+    }
+    #controls kbd {
+      background: #222; border: 1px solid #444; padding: 2px 6px;
+      border-radius: 3px; color: #ddd; font-size: 11px;
+    }
+    #status { color: #ffaa44; }
+
+    #error-overlay {
+      display: none;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #0a0a0a; color: #ff4444; font-family: monospace;
+      padding: 40px; z-index: 1000;
+      justify-content: center; align-items: center; text-align: center;
+      flex-direction: column;
+    }
+    #error-overlay h2 { color: #fff; margin-bottom: 16px; }
+    #error-overlay p { color: #aaa; max-width: 500px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div id="error-overlay">
+    <h2>WebGL Required</h2>
+    <p>Concrete Kingdom needs WebGL to run. Your browser doesn't seem to support it, or it's disabled.</p>
+    <p style="margin-top:12px;color:#666;font-size:12px">Try Chrome, Firefox, or Edge on a desktop/laptop.</p>
+  </div>
+
+  <div id="hud">
+    <div class="left">
+      CONCRETE KINGDOM — Graybox v0.1<br/>
+      <span id="status">LOADING...</span>
+    </div>
+    <div class="right" id="info">
+      FPS: <span id="fps">0</span><br/>
+      POS: <span id="pos">0, 0, 0</span>
+    </div>
+  </div>
+  <div id="controls">
+    <kbd>W A S D</kbd> Move &nbsp;|&nbsp; <kbd>Shift</kbd> Sprint &nbsp;|&nbsp;
+    <kbd>Space</kbd> Jump &nbsp;|&nbsp; <kbd>E</kbd> Interact &nbsp;|&nbsp;
+    <kbd>R</kbd> Rob &nbsp;|&nbsp; <kbd>LMB</kbd> Look &nbsp;|&nbsp; <kbd>Tab</kbd> Toggle mouse lock
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+  <script>
+    // WebGL detection fallback
+    try {
+      var c = document.createElement('canvas');
+      var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+      if (!gl) {
+        document.getElementById('error-overlay').style.display = 'flex';
+      }
+    } catch(e) {
+      document.getElementById('error-overlay').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+; Engine configuration for Concrete Kingdom — Godot 4 Port
+; Graybox prototype matching Three.js version
+
+[application]
+config/name="Concrete Kingdom"
+config/description="Urban crime sandbox — one district, your empire."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.0")
+config/icon="res://icon.svg"
+
+[rendering]
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="gl_compatibility"
+
+[input]
+devices/pointing/emulate_touch_from_mouse=false
+
+move_forward={
+"deadzone": 0.5,
+"events": [{"keycode": 87, "type": 2}]
+}
+move_back={
+"deadzone": 0.5,
+"events": [{"keycode": 83, "type": 2}]
+}
+move_left={
+"deadzone": 0.5,
+"events": [{"keycode": 65, "type": 2}]
+}
+move_right={
+"deadzone": 0.5,
+"events": [{"keycode": 68, "type": 2}]
+}
+sprint={
+"events": [{"keycode": 64, "type": 2}]
+}
+jump={
+"events": [{"keycode": 32, "type": 2}]
+}
+interact={
+"events": [{"keycode": 69, "type": 2}]
+}
+vault={
+"events": [{"keycode": 81, "type": 2}]
+}
+brake={
+"events": [{"keycode": 83, "type": 2}]
+}
+
+[autoload]
+GameState="*res://scripts/game_state.gd"
+MissionDirector="*res://scripts/mission_director.gd"
+FactionSystem="*res://scripts/faction_system.gd"
+WantedDirector="*res://scripts/wanted_director.gd"
+
+[physics]
+common/enable_pause_aware_picking=true
+3d/default_gravity=-24
+
+[network]
+limits/debugger_limits/max_queued_messages=2048

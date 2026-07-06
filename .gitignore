@@ -1,0 +1,11 @@
+node_modules/
+dist/
+public/models/textures/
+*.pem
+.key
+.env
+.DS_Store
+*.log
+concept_art/
+__pycache__/
+*.pyc

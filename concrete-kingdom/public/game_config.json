@@ -1,0 +1,46 @@
+{
+  "_comment": "Concrete Kingdom Game Config — edit values and refresh the page to apply",
+
+  "player": {
+    "walk_speed": 6,
+    "sprint_speed": 12,
+    "jump_height": 7
+  },
+
+  "vehicle": {
+    "max_speed": 28,
+    "acceleration": 18,
+    "steering_sensitivity": 0.8,
+    "drift_factor": 0.95
+  },
+
+  "police": {
+    "patrol_speed": 3,
+    "chase_speed": 10,
+    "detection_range": 15,
+    "lose_range": 40
+  },
+
+  "world": {
+    "day_night_cycle_seconds": 120,
+    "ambient_brightness": 0.6,
+    "sun_intensity_day": 1.2,
+    "sun_intensity_night": 0.6
+  },
+
+  "economy": {
+    "passive_income_per_business": 2,
+    "robbery_min": 50,
+    "robbery_max": 200,
+    "vault_min": 500,
+    "vault_max": 1500
+  },
+
+  "buildings": [
+    { "name": "Warehouse", "x": -18, "z": -14, "width": 8, "depth": 10, "height": 12, "color": "#4a4a5a" },
+    { "name": "Bar", "x": 14, "z": -14, "width": 7, "depth": 8, "height": 15, "color": "#3a4a6a" },
+    { "name": "Apartment", "x": -14, "z": 16, "width": 9, "depth": 9, "height": 10, "color": "#5a4a3a" },
+    { "name": "Office", "x": 16, "z": 16, "width": 6, "depth": 6, "height": 18, "color": "#4a3a5a" },
+    { "name": "Bank", "x": -18, "z": 18, "width": 12, "depth": 10, "height": 14, "color": "#887744" }
+  ]
+}
