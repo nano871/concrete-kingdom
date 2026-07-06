@@ -184,6 +184,61 @@ scene.add(bankSign);
 
 buildBankInterior();
 
+// ── Gun Shop interior ──
+let inGunShop = false;
+const gunShopInterior = new THREE.Group();
+function buildGunShopInterior() {
+  // Floor
+  const floorMat = new THREE.MeshStandardMaterial({ color: 0x553322, roughness: 0.8 });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 6), floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -0.01;
+  gunShopInterior.add(floor);
+
+  // Walls
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0xccbb88, roughness: 0.4 });
+  const walls = [
+    { x: 0, z: -3, sx: 8, sz: 0.3 },
+    { x: -4, z: 0, sx: 0.3, sz: 6 },
+    { x: 4, z: 0, sx: 0.3, sz: 6 },
+  ];
+  for (const w of walls) {
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(w.sx, 3, w.sz), wallMat);
+    wall.position.set(w.x, 1.5, w.z);
+    gunShopInterior.add(wall);
+  }
+
+  // Counter
+  const counterMat = new THREE.MeshStandardMaterial({ color: 0x885533, roughness: 0.6 });
+  const counter = new THREE.Mesh(new THREE.BoxGeometry(3, 1, 0.5), counterMat);
+  counter.position.set(0, 0.5, -2.5);
+  gunShopInterior.add(counter);
+
+  // Display case with weapons
+  const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x88ccff, transparent: true, opacity: 0.2, roughness: 0 });
+  const display = new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 0.6), glassMat);
+  display.position.set(0, 0.8, -2.7);
+  gunShopInterior.add(display);
+
+  // Guns on wall
+  const gunMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.6, roughness: 0.3 });
+  for (let i = -1; i <= 1; i++) {
+    const g = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.06, 0.1), gunMat);
+    g.position.set(i * 1.5, 2, -2.8);
+    gunShopInterior.add(g);
+  }
+
+  // Sign
+  const signMat = new THREE.MeshBasicMaterial({ color: 0xff4444 });
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(2, 0.4), signMat);
+  sign.position.set(0, 2.8, -2.9);
+  gunShopInterior.add(sign);
+
+  gunShopInterior.visible = false;
+  scene.add(gunShopInterior);
+}
+buildGunShopInterior();
+
 // ── Interact prompt (HTML overlay) ──
 const interactPrompt = document.createElement('div');
 interactPrompt.style.cssText = `
@@ -253,6 +308,10 @@ function gameLoop(time) {
   const nearBank = player.pos.distanceTo(bankPos) < 4;
   const nearVault = player.pos.distanceTo(new THREE.Vector3(-18, 1.8, -18)) < 2.5;
 
+  // Gun shop entrance detection
+  const gunShopPos = new THREE.Vector3(26, 0, -5.5);
+  const nearGunShop = player.pos.distanceTo(gunShopPos) < 4;
+
   if (KEYS['e'] && !player._eWasPressed) {
     if (inVehicle) {
       vehicle.exit();
@@ -265,6 +324,22 @@ function gameLoop(time) {
       inVehicle = true;
       player.mesh.visible = false;
       interactPrompt.style.display = 'none';
+    } else if (inGunShop) {
+      // Exit gun shop
+      inGunShop = false;
+      gunShopInterior.visible = false;
+      player.mesh.visible = true;
+      player.pos.set(26, 1.8, -3);
+      interactPrompt.style.display = 'none';
+    } else if (nearGunShop && !inGunShop) {
+      // Enter gun shop
+      inGunShop = true;
+      gunShopInterior.visible = true;
+      player.mesh.visible = false;
+      player.camera.position.set(26, 5, -1);
+      player.camera.lookAt(26, 2, -3);
+      interactPrompt.textContent = '[E] Exit Shop  |  [1] Buy Pistol $200  |  [2] Buy Rifle $800';
+      interactPrompt.style.display = 'block';
     } else if (inBank && nearVault && !vaultLooted) {
       // Rob the vault
       const haul = 500 + Math.floor(Math.random() * 1000);
@@ -305,6 +380,8 @@ function gameLoop(time) {
   // ── Update interact prompt ──
   if (inBank) {
     // prompt already set on entry
+  } else if (inGunShop) {
+    // prompt already set on entry
   } else if (inVehicle) {
     interactPrompt.style.display = 'block';
     interactPrompt.textContent = '[E] Exit Vehicle';
@@ -314,6 +391,9 @@ function gameLoop(time) {
   } else if (nearBank) {
     interactPrompt.style.display = 'block';
     interactPrompt.textContent = '[E] Enter Bank';
+  } else if (nearGunShop) {
+    interactPrompt.style.display = 'block';
+    interactPrompt.textContent = '[E] Enter Gun Shop';
   } else if (nearBusiness && !KEYS['e']) {
     interactPrompt.style.display = 'block';
     const bizStatus = nearBusiness.state === 'player-owned' ? 'OWNED' : `${(nearBusiness.captureProgress * 100).toFixed(0)}%`;
@@ -328,6 +408,9 @@ function gameLoop(time) {
     document.getElementById('status').textContent = vaultLooted
       ? `$${money} | VAULT EMPTY | HT: ${STATE.heat}`
       : `$${money} | INSIDE BANK | HT: ${STATE.heat}`;
+  } else if (inGunShop) {
+    const weaponStatus = combat.isArmed() ? `ARMED: ${combat.equipped.toUpperCase()}` : 'UNARMED';
+    document.getElementById('status').textContent = `$${money} | GUN SHOP | ${weaponStatus}`;
   } else if (inVehicle) {
     // Vehicle mode: map WASD to vehicle input
     vehicleInput.forward = KEYS['w'];
@@ -388,6 +471,25 @@ function gameLoop(time) {
     }
   }
   player._rWasPressed = KEYS['r'];
+
+  // ── Weapon purchase (number keys) ──
+  if (inGunShop) {
+    if (KEYS['1'] && !player._1WasPressed) {
+      const result = combat.buyWeapon('pistol');
+      document.getElementById('status').textContent = result === 'bought' ? 'PURCHASED PISTOL' : result === 'already owned' ? 'ALREADY OWNED' : 'NEED $200';
+      setTimeout(() => document.getElementById('status').textContent = '', 1500);
+    }
+    if (KEYS['2'] && !player._2WasPressed) {
+      const result = combat.buyWeapon('rifle');
+      document.getElementById('status').textContent = result === 'bought' ? 'PURCHASED RIFLE' : result === 'already owned' ? 'ALREADY OWNED' : 'NEED $800';
+      setTimeout(() => document.getElementById('status').textContent = '', 1500);
+    }
+  }
+  player._1WasPressed = KEYS['1'];
+  player._2WasPressed = KEYS['2'];
+
+  // ── Sync money with combat system ──
+  combat.syncMoney(money);
 
   // ── Police update ──
   police.update(dt);

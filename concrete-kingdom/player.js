@@ -64,6 +64,32 @@ export class PlayerController {
     this.limbs.rArm.rotation.order = 'ZYX';
     this.mesh.add(this.limbs.rArm);
 
+    // Pistol on right hand
+    const gunMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.3, metalness: 0.6 });
+    const slideMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.7, roughness: 0.2 });
+    this.gun = new THREE.Group();
+    // Main body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.1), gunMat);
+    body.castShadow = true;
+    this.gun.add(body);
+    // Barrel
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.01, 0.06, 6), gunMat);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0, 0, -0.08);
+    this.gun.add(barrel);
+    // Grip
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 0.04), gunMat);
+    grip.position.set(0, -0.04, 0.02);
+    this.gun.add(grip);
+    // Slide
+    const slide = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 0.07), slideMat);
+    slide.position.set(0, 0.04, -0.02);
+    this.gun.add(slide);
+
+    this.gun.position.set(0.05, -0.05, 0.05);
+    this.gun.rotation.x = -0.3;
+    this.limbs.rArm.add(this.gun);
+
     // Legs (blue jeans)
     const legMat = new THREE.MeshStandardMaterial({ color: 0x334466, roughness: 0.7 });
     this.limbs.lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.5, 6), legMat);

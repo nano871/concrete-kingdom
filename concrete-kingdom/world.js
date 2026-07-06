@@ -135,6 +135,8 @@ export function buildWorld(scene) {
     { x: -26, z: -22, w: 5, d: 6, h: 8, color: 0x888888, tex: textures.storefront, name: 'Laundry' },
     { x: 24, z: 22, w: 6, d: 6, h: 10, color: 0x888888, tex: textures.storefront, name: 'Cafe' },
     { x: -26, z: 24, w: 5, d: 5, h: 8, color: 0x888888, tex: textures.storefront, name: 'Bodega' },
+    // Gun shop
+    { x: 26, z: -8, w: 6, d: 5, h: 8, color: 0x888888, tex: textures.storefront, name: 'Gun Shop' },
   ];
 
   const interiors = [];
