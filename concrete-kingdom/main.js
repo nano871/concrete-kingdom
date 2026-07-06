@@ -10,6 +10,8 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { PedestrianSystem } from './npcs.js';
 import { TrafficSystem } from './traffic.js';
 import { CombatSystem } from './combat.js';
+import { MissionManager } from './missions.js';
+import { MissionMenu } from './mission_menu.js';
 
 // ── Setup ──
 const scene = new THREE.Scene();
@@ -94,6 +96,21 @@ const traffic = new TrafficSystem(scene);
 
 // ── Combat system ──
 const combat = new CombatSystem(scene, camera, player);
+
+// ── Mission manager ──
+const missions = new MissionManager(scene);
+
+// ── Mission menu ──
+const missionMenu = new MissionMenu();
+missionMenu.onStart = (missionId) => {
+  const m = missions.missions[missionId];
+  if (m && m.state === 'available') {
+    m.state = 'active';
+    missions.activeMission = m;
+    document.getElementById('status').textContent = `MISSION: ${m.title}`;
+    missionMenu.hide();
+  }
+};
 
 // Mouse combat controls
 KEYS['mousedown'] = false;
@@ -340,6 +357,20 @@ function gameLoop(time) {
       player.camera.lookAt(26, 2, -3);
       interactPrompt.textContent = '[E] Exit Shop  |  [1] Buy Pistol $200  |  [2] Buy Rifle $800';
       interactPrompt.style.display = 'block';
+    } else if (missions.update(player.pos)) {
+      // Near mission marker
+      const marker = missions.nearbyMarker;
+      if (marker) {
+        interactPrompt.textContent = `[E] Start: ${marker.mission.title}`;
+        interactPrompt.style.display = 'block';
+        if (KEYS['e'] && !player._eWasPressed) {
+          const result = missions.startMission();
+          if (result) {
+            document.getElementById('status').textContent = `MISSION: ${result.title}`;
+            setTimeout(() => {}, 500);
+          }
+        }
+      }
     } else if (inBank && nearVault && !vaultLooted) {
       // Rob the vault
       const haul = 500 + Math.floor(Math.random() * 1000);
@@ -436,12 +467,14 @@ function gameLoop(time) {
       `VEHICLE | $${money} | SPD: ${(vehicle.getSpeed() * 3.6).toFixed(0)} km/h | HT: ${STATE.heat}`;
     document.getElementById('pos').textContent =
       `${vPos.x.toFixed(1)}, ${vPos.y.toFixed(1)}, ${vPos.z.toFixed(1)}`;
-  } else if (!inBank) {
+  } else if (!inBank && !inGunShop && !missionMenu.visible) {
     // On-foot mode
     player.update(dt);
     police.setPlayerPos(player.pos);
+    const activeM = missions.getActiveMission();
+    const missionStr = activeM ? ` | MISS: ${activeM.title}` : '';
     document.getElementById('status').textContent =
-      `$${money} | SPD: ${STATE.speed.toFixed(1)} | HT: ${STATE.heat}`;
+      `$${money} | SPD: ${STATE.speed.toFixed(1)} | HT: ${STATE.heat}${missionStr}`;
     if (combat.isAiming()) {
       document.getElementById('status').textContent += ` | AMMO: ${combat.getAmmoDisplay()}`;
     }
@@ -452,6 +485,12 @@ function gameLoop(time) {
     player.vault();
   }
   player._qWasPressed = KEYS['q'];
+
+  // ── M mission menu ──
+  if (KEYS['m'] && !player._mWasPressed) {
+    missionMenu.toggle(missions);
+  }
+  player._mWasPressed = KEYS['m'];
 
   // ── R robbery ──
   if (KEYS['r'] && !player._rWasPressed && !inVehicle) {
