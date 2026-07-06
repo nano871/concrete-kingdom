@@ -4,15 +4,32 @@ An open-world crime sandbox game. One district. Your empire.
 
 Built with **Three.js** (web prototype) and **Godot 4** (native port). Inspired by GTA V.
 
-## Quick Start (Web)
+## Play Online
+
+The live game is hosted at: **https://88.99.15.139/**
+(Click Advanced → Proceed past the self-signed cert warning)
+
+## Quick Start (Local Web)
 
 ```bash
+# From the repo root
 cd concrete-kingdom
 npm install
 npx vite
 ```
 
 Open http://localhost:5173 in your browser.
+
+## Quick Start (Production Build)
+
+```bash
+cd concrete-kingdom
+npm install
+npx vite build
+node server.js
+```
+
+Open https://localhost:443 in your browser.
 
 ## Quick Start (Godot 4)
 
