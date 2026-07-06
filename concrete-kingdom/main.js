@@ -7,6 +7,9 @@ import { Vehicle } from './vehicle.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { PedestrianSystem } from './npcs.js';
+import { TrafficSystem } from './traffic.js';
+import { CombatSystem } from './combat.js';
 
 // ── Setup ──
 const scene = new THREE.Scene();
@@ -28,7 +31,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 1.8;
 document.body.prepend(renderer.domElement);
 
 // ── Post-processing (bloom + glow) ──
@@ -44,13 +47,13 @@ const bloomPass = new UnrealBloomPass(
 composer.addPass(bloomPass);
 
 // ── Lighting ──
-const ambient = new THREE.AmbientLight(0x404055, 0.4);
+const ambient = new THREE.AmbientLight(0x8888bb, 1.0);
 scene.add(ambient);
 
-const hemi = new THREE.HemisphereLight(0x8888ff, 0x443322, 0.4);
+const hemi = new THREE.HemisphereLight(0x88ccff, 0x664422, 0.8);
 scene.add(hemi);
 
-const sun = new THREE.DirectionalLight(0xffeedd, 1.2);
+const sun = new THREE.DirectionalLight(0xffeedd, 2.5);
 sun.position.set(10, 20, 5);
 sun.castShadow = true;
 sun.shadow.mapSize.width = 2048;
@@ -63,7 +66,7 @@ sun.shadow.camera.top = 30;
 sun.shadow.camera.bottom = -30;
 scene.add(sun);
 
-const fill = new THREE.DirectionalLight(0x4488ff, 0.3);
+const fill = new THREE.DirectionalLight(0x88bbff, 0.6);
 fill.position.set(-10, 5, -5);
 scene.add(fill);
 
@@ -84,6 +87,23 @@ const businesses = new BusinessSystem(scene);
 const vehicle = new Vehicle(scene);
 vehicle.linkPlayer(player.mesh);
 vehicle.setBuildings(buildings);
+
+// ── Ambient NPCs & Traffic ──
+const pedestrians = new PedestrianSystem(scene, buildings);
+const traffic = new TrafficSystem(scene);
+
+// ── Combat system ──
+const combat = new CombatSystem(scene, camera, player);
+
+// Mouse combat controls
+KEYS['mousedown'] = false;
+KEYS['space'] = false;
+document.addEventListener('mousedown', (e) => { if (e.button === 2) KEYS['mousedown'] = true; });
+document.addEventListener('mouseup', (e) => { if (e.button === 2) KEYS['mousedown'] = false; });
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+// Left click shoots
+document.addEventListener('mousedown', (e) => { if (e.button === 0 && combat.isAiming()) KEYS[' '] = true; });
+document.addEventListener('mouseup', (e) => { if (e.button === 0) KEYS[' '] = false; });
 
 // ── Game state ──
 let inVehicle = false;
@@ -204,8 +224,8 @@ function gameLoop(time) {
     isNight = !isNight;
     scene.background = isNight ? new THREE.Color(0x0a0a14) : skyTex;
     scene.fog.color.setHex(isNight ? 0x0a0a14 : 0x87CEEB);
-    sun.intensity = isNight ? 0.6 : 1.2;
-    ambient.intensity = 0.6;
+    sun.intensity = isNight ? 1.2 : 2.5;
+    ambient.intensity = 1.2;
   }
 
   // ── Heat system ──
@@ -339,6 +359,9 @@ function gameLoop(time) {
     police.setPlayerPos(player.pos);
     document.getElementById('status').textContent =
       `$${money} | SPD: ${STATE.speed.toFixed(1)} | HT: ${STATE.heat}`;
+    if (combat.isAiming()) {
+      document.getElementById('status').textContent += ` | AMMO: ${combat.getAmmoDisplay()}`;
+    }
   }
 
   // ── Q vault ──
@@ -368,6 +391,13 @@ function gameLoop(time) {
 
   // ── Police update ──
   police.update(dt);
+
+  // ── Ambient NPCs & Traffic update ──
+  pedestrians.update(dt, player.pos);
+  traffic.update(dt, player.pos);
+
+  // ── Combat update ──
+  combat.update(dt, KEYS);
 
   // ── Render frame ──
   composer.render();

@@ -90,6 +90,7 @@ export class PoliceController {
 
     body.position.set(x, 0.25, z);
     body.rotation.y = rotY;
+    body.userData = { isPolice: true };
     this.scene.add(body);
 
     const car = {
