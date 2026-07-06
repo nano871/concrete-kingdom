@@ -241,7 +241,9 @@ export class PoliceController {
     if (dt > 0.1) dt = 0.1;
 
     const activeHeat = this.heatTarget;
-    const searchRadius = 5 + activeHeat * 5;
+    // GTA V style: search radius shrinks over time (cops lose interest)
+    const searchRadius = Math.max(8, (5 + activeHeat * 8) - this._searchShrink * 0.5);
+    this._searchShrink += dt;
 
     for (const car of this.cars) {
       const dx = this.playerPos.x - car.pos.x;

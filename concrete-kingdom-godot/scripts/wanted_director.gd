@@ -11,8 +11,15 @@ signal player_busted()
 signal player_escaped()
 
 const MAX_STARS = 5
-const STAR_DECAY_TIME = [0, 8.0, 12.0, 18.0, 25.0, 35.0]  # seconds per star to decay
+const STAR_DECAY_TIME = [0, 8.0, 12.0, 18.0, 25.0, 35.0]
+const SPAWN_CAPS = [0, 3, 5, 8, 12, 15]      # GTA V exact caps
 const DETECTION_RANGE = [0, 15.0, 25.0, 35.0, 50.0, 80.0]
+const MIN_SPAWN_DIST = 25                       # spawn off-screen
+const MAX_SPAWN_DIST = 40
+
+# Search phase: radius shrinks over time (GTA pattern)
+const SEARCH_INITIAL_RADIUS = [0, 20, 30, 40, 50, 60]
+const SEARCH_SHRINK_RATE = [0, 2.0, 1.5, 1.0, 0.8, 0.5]  # units/sec
 
 # Star level definitions
 # 1★: Local patrol responds, 1 car

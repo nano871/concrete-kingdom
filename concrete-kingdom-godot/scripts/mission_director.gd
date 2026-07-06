@@ -70,17 +70,25 @@ func _define_missions():
 	_add_mission({
 		"id": "m02_warehouse_job",
 		"title": "Warehouse Job",
-		"description": "The syndicate wants the warehouse. Take it. Keep the cops off your back.",
+		"description": "The syndicate wants the warehouse. Take it.",
 		"faction": "syndicate",
 		"required_missions": ["m01_first_score"],
 		"objectives": [
+			# ACT 1: Setup — drive to warehouse
 			{"id": "obj_go_to_wh", "type": "goto", "target_id": "Warehouse",
-			 "position": Vector3(-12, 0, -3), "radius": 4.0,
-			 "description": "Get to the warehouse"},
-			{"id": "obj_take_wh", "type": "interact", "target_id": "Warehouse",
-			 "description": "Take over the warehouse"},
-			{"id": "obj_survive", "type": "timed", "count": 30,
-			 "description": "Survive the police response (30 seconds)"},
+			 "position": Vector3(-18, 0, -9), "radius": 4.0,
+			 "description": "Drive to the warehouse — check your gear"},
+			# ACT 2: Escalation — alarms trigger, cops swarm
+			{"id": "obj_breach", "type": "interact", "target_id": "Warehouse",
+			 "description": "Breach the warehouse — alarms trigger"},
+			{"id": "obj_survive", "type": "timed", "count": 20,
+			 "description": "Survive the initial police response (20s)"},
+			# ACT 3: Climax — get the goods, escape through the back
+			{"id": "obj_loot", "type": "interact", "target_id": "Warehouse",
+			 "description": "Grab the syndicate's shipment"},
+			# ACT 4: Aftermath — escape the heat
+			{"id": "obj_escape", "type": "escape",
+			 "description": "Lose the cops and deliver the goods"},
 		],
 		"reward_money": 1200,
 		"reward_rep": {"syndicate": 15},
