@@ -116,20 +116,32 @@ missionMenu.onStart = (missionId) => {
 // ── Expanded World (cell-based streaming) ──
 const worldStream = new WorldStream(scene);
 const mapCells = [];
-for (let x = -2; x <= 2; x++) {
-  for (let z = -2; z <= 2; z++) {
-    if (x === 0 && z === 0) continue;
-    const dist = Math.sqrt(x*x + z*z);
-    mapCells.push({
-      x, z,
-      density: dist <= 1.5 ? 0.6 : 0.3,
-      roadType: dist <= 1.5 ? 'grid' : 'main',
-      hasPark: Math.random() < 0.15,
-      landmarkType: (x === 2 && z === 2) ? 'bank' :
-                     (x === -2 && z === -2) ? 'mall' :
-                     (x === 2 && z === -2) ? 'station' : null,
-    });
-  }
+// Center city (0,0) - handled by existing world.js
+// Surrounding neighborhoods with unique character
+const districts = [
+  { x: -1, z: -1, district: 'residential', density: 0.4, roadType: 'grid', hasPark: true },
+  { x: 1, z: -1, district: 'industrial', density: 0.5, roadType: 'grid' },
+  { x: -1, z: 1, district: 'entertainment', density: 0.6, roadType: 'grid' },
+  { x: 1, z: 1, district: 'residential', density: 0.3, roadType: 'main', hasPark: true },
+  { x: 0, z: -1, district: 'commercial', density: 0.5, roadType: 'grid' },
+  { x: 0, z: 1, district: 'commercial', density: 0.4, roadType: 'grid' },
+  { x: -1, z: 0, district: 'residential', density: 0.3, roadType: 'main' },
+  { x: 1, z: 0, district: 'industrial', density: 0.4, roadType: 'main' },
+  // Outer ring - hills, sparse development
+  { x: -2, z: -2, district: 'residential', density: 0.1, roadType: 'none', hasPark: true },
+  { x: 2, z: -2, district: 'industrial', density: 0.15, roadType: 'none', landmarkType: 'station' },
+  { x: -2, z: 2, district: 'residential', density: 0.1, roadType: 'none', hasPark: true },
+  { x: 2, z: 2, district: 'residential', density: 0.1, roadType: 'none', landmarkType: 'mall' },
+  { x: -2, z: -1, district: 'residential', density: 0.2, roadType: 'main' },
+  { x: -2, z: 0, district: 'residential', density: 0.15, roadType: 'main' },
+  { x: -2, z: 1, district: 'residential', density: 0.15, roadType: 'main' },
+  { x: 2, z: -1, district: 'industrial', density: 0.2, roadType: 'main' },
+  { x: 2, z: 0, district: 'industrial', density: 0.2, roadType: 'main' },
+  { x: 2, z: 1, district: 'residential', density: 0.15, roadType: 'main' },
+];
+for (const d of districts) {
+  if (d.x === 0 && d.z === 0) continue;
+  mapCells.push(d);
 }
 worldStream.defineMap(mapCells);
 
