@@ -573,6 +573,8 @@ function gameLoop(time) {
   police.update(dt);
 
   // ── Ambient NPCs & Traffic update ──
+  pedestrians._playerSpeed = STATE.speed;
+  pedestrians._playerInVehicle = inVehicle;
   pedestrians.update(dt, player.pos);
   traffic.update(dt, player.pos);
 

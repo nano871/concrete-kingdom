@@ -1,8 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * Ambient pedestrian system.
- * Spawns walkers on sidewalks that move along simple paths.
+ * Ambient pedestrian system with RDR2-style NPC reactivity.
  */
 export class PedestrianSystem {
   constructor(scene, buildings) {
@@ -11,7 +10,6 @@ export class PedestrianSystem {
     this.pedestrians = [];
     this.maxPeds = 15;
 
-    // Sidewalk waypoints (corners of the intersection)
     this.waypoints = [
       new THREE.Vector3(-7, 0, -7), new THREE.Vector3(7, 0, -7),
       new THREE.Vector3(-7, 0, 7), new THREE.Vector3(7, 0, 7),
@@ -22,30 +20,26 @@ export class PedestrianSystem {
     ];
 
     this.spawnTimer = 0;
+    this._playerSpeed = 0;
+    this._playerInVehicle = false;
     this._spawnInitial();
   }
 
   _spawnInitial() {
-    for (let i = 0; i < 8; i++) {
-      this._spawnPedestrian();
-    }
+    for (let i = 0; i < 8; i++) this._spawnPedestrian();
   }
 
   _spawnPedestrian() {
     if (this.pedestrians.length >= this.maxPeds) return;
-
     const startIdx = Math.floor(Math.random() * this.waypoints.length);
     const start = this.waypoints[startIdx].clone();
     start.x += (Math.random() - 0.5) * 1;
     start.z += (Math.random() - 0.5) * 1;
 
-    // Random color for clothing
     const colors = [0x44aaff, 0xff6644, 0x44ff66, 0xff44aa, 0xffff44, 0xaa44ff, 0x44ffaa, 0xff8844];
     const color = colors[Math.floor(Math.random() * colors.length)];
 
-    // Simple humanoid (box body + sphere head)
     const group = new THREE.Group();
-
     const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.6 });
     const body = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.5, 0.2), bodyMat);
     body.position.y = 0.5;
@@ -56,7 +50,6 @@ export class PedestrianSystem {
     head.position.y = 0.9;
     group.add(head);
 
-    // Legs
     const legMat = new THREE.MeshStandardMaterial({ color: 0x334466, roughness: 0.7 });
     const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.3, 4), legMat);
     lLeg.position.set(-0.08, 0.15, 0);
@@ -69,7 +62,6 @@ export class PedestrianSystem {
     group.position.y = 0;
     this.scene.add(group);
 
-    // Pick a random nearby waypoint as target
     let targetIdx = Math.floor(Math.random() * this.waypoints.length);
     if (targetIdx === startIdx) targetIdx = (targetIdx + 1) % this.waypoints.length;
     const target = this.waypoints[targetIdx].clone();
@@ -77,66 +69,90 @@ export class PedestrianSystem {
     target.z += (Math.random() - 0.5) * 1;
 
     this.pedestrians.push({
-      mesh: group,
-      start: start,
-      target: target,
+      mesh: group, start, target,
       speed: 0.8 + Math.random() * 0.6,
-      progress: Math.random(), // start at random point along path
+      progress: Math.random(),
       rotY: Math.atan2(target.x - start.x, target.z - start.z),
       animTime: Math.random() * 10,
+      state: 'wander',
+      alertTimer: 0,
+      fleeTarget: null,
+      fleeDir: null,
     });
   }
 
   update(dt, playerPos) {
-    // Spawn new pedestrians periodically
     this.spawnTimer += dt;
     if (this.spawnTimer > 3 && this.pedestrians.length < this.maxPeds) {
       this.spawnTimer = 0;
-      // Only spawn if player is nearby (within 30 units of a waypoint)
       const nearWaypoint = this.waypoints.some(wp => wp.distanceTo(playerPos) < 30);
       if (nearWaypoint) this._spawnPedestrian();
     }
 
     for (let i = this.pedestrians.length - 1; i >= 0; i--) {
       const ped = this.pedestrians[i];
+      const distToPlayer = ped.mesh.position.distanceTo(playerPos);
       ped.animTime += dt;
 
-      // Move toward target
-      const dir = new THREE.Vector3().subVectors(ped.target, ped.mesh.position);
-      dir.y = 0;
-      const dist = dir.length();
-
-      if (dist < 0.3) {
-        // Reached target, pick a new one or despawn
-        if (Math.random() < 0.3 || this.pedestrians.length > this.maxPeds) {
-          this.scene.remove(ped.mesh);
-          this.pedestrians.splice(i, 1);
-          continue;
-        }
-        // Pick new target
-        const waypoints = this.waypoints;
-        const tIdx = Math.floor(Math.random() * waypoints.length);
-        ped.target.copy(waypoints[tIdx]);
-        ped.target.x += (Math.random() - 0.5) * 1.5;
-        ped.target.z += (Math.random() - 0.5) * 1.5;
+      // ── React to player (RDR2-style) ──
+      if (distToPlayer < 8 && this._playerSpeed > 5) {
+        // Player moving fast nearby — flee
+        ped.state = 'flee';
+        const away = new THREE.Vector3().subVectors(ped.mesh.position, playerPos).normalize();
+        ped.fleeTarget = ped.mesh.position.clone().add(away.multiplyScalar(5 + Math.random() * 5));
+        ped.speed = 2 + Math.random();
+      } else if (distToPlayer < 3 && this._playerSpeed <= 5) {
+        ped.state = 'alert';
+        ped.alertTimer = 1.0;
+        // Face the player
+        const lookDir = new THREE.Vector3().subVectors(playerPos, ped.mesh.position);
+        ped.rotY = Math.atan2(lookDir.x, lookDir.z);
+        ped.mesh.rotation.y = ped.rotY;
+      } else if (ped.state === 'alert') {
+        ped.alertTimer -= dt;
+        if (ped.alertTimer <= 0) ped.state = 'wander';
+      } else if (ped.state === 'flee') {
+        if (distToPlayer > 20) { ped.state = 'wander'; continue; }
+        const dir = new THREE.Vector3().subVectors(ped.fleeTarget, ped.mesh.position);
+        dir.y = 0;
+        if (dir.length() < 0.5) { ped.state = 'wander'; continue; }
+        dir.normalize();
+        ped.mesh.position.x += dir.x * ped.speed * dt;
+        ped.mesh.position.z += dir.z * ped.speed * dt;
+        ped.rotY = Math.atan2(dir.x, dir.z);
+        ped.mesh.rotation.y = ped.rotY;
+        continue;
       }
 
-      // Move
-      const moveDir = dir.clone().normalize();
-      const speed = ped.speed * dt;
-      ped.mesh.position.x += moveDir.x * speed;
-      ped.mesh.position.z += moveDir.z * speed;
+      // ── Normal wander behavior ──
+      if (ped.state === 'wander') {
+        const dir = new THREE.Vector3().subVectors(ped.target, ped.mesh.position);
+        dir.y = 0;
+        const dist = dir.length();
+        if (dist < 0.3) {
+          if (Math.random() < 0.3 || this.pedestrians.length > this.maxPeds) {
+            this.scene.remove(ped.mesh);
+            this.pedestrians.splice(i, 1);
+            continue;
+          }
+          const tIdx = Math.floor(Math.random() * this.waypoints.length);
+          ped.target.copy(this.waypoints[tIdx]);
+          ped.target.x += (Math.random() - 0.5) * 1.5;
+          ped.target.z += (Math.random() - 0.5) * 1.5;
+        }
+        const moveDir = dir.clone().normalize();
+        const speed = ped.speed * dt;
+        ped.mesh.position.x += moveDir.x * speed;
+        ped.mesh.position.z += moveDir.z * speed;
+        ped.rotY = Math.atan2(moveDir.x, moveDir.z);
+        ped.mesh.rotation.y = ped.rotY;
+      }
 
-      // Face movement direction
-      ped.rotY = Math.atan2(moveDir.x, moveDir.z);
-      ped.mesh.rotation.y = ped.rotY;
-
-      // Simple walk animation (leg bob)
+      // Walk animation
       const legSwing = Math.sin(ped.animTime * 5) * 0.3;
-      ped.mesh.children[1].rotation.x = legSwing; // left leg
-      ped.mesh.children[2].rotation.x = -legSwing; // right leg
+      if (ped.mesh.children[1]) ped.mesh.children[1].rotation.x = legSwing;
+      if (ped.mesh.children[2]) ped.mesh.children[2].rotation.x = -legSwing;
 
-      // Despawn if too far from player
       if (ped.mesh.position.distanceTo(playerPos) > 50) {
         this.scene.remove(ped.mesh);
         this.pedestrians.splice(i, 1);
