@@ -34,6 +34,7 @@ export class Vehicle {
     this.playerRef = null;  // ref to the player mesh
     this.buildings = [];    // building meshes for collision
     this.modelLoaded = false;
+    this._camOrbit = 0; // camera orbit angle offset for mouse look
 
     this._buildFallbackMesh(); // placeholder until GLTF loads
     this._loadModel();         // async GLTF load
@@ -43,7 +44,7 @@ export class Vehicle {
     const loader = new GLTFLoader();
     loader.load('/models/porsche.gltf', (gltf) => {
       const model = gltf.scene;
-      model.scale.set(0.5, 0.5, 0.5);
+      model.scale.set(0.8, 0.8, 0.8);
       model.position.y = 0.3;
       // Rotate model 180° so front faces -Z (matching physics direction)
       model.rotation.y = Math.PI;

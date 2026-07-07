@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { buildWorld } from './world.js';
-import { PlayerController, KEYS, STATE } from './player.js';
+import { PlayerController, KEYS, STATE, MOUSE } from './player.js';
 import { PoliceController } from './police.js';
 import { BusinessSystem } from './business.js';
 import { Vehicle } from './vehicle.js';
@@ -472,13 +472,19 @@ function gameLoop(time) {
     vehicleInput.brake = KEYS[' '];
     vehicle.update(vehicleInput, dt);
 
-    // Camera follows vehicle (third-person chase)
+    // Mouse orbit camera (look around while driving)
+    vehicle._camOrbit -= MOUSE.dx * 0.003;
+    MOUSE.dx = 0; // consume the movement
+
+    // Camera follows vehicle (third-person chase, with mouse orbit)
     const vPos = vehicle.pos;
     const vRot = vehicle.rotY;
     const camDist = 8;
     const camHeight = 4;
-    const camX = vPos.x + Math.sin(vRot) * camDist;
-    const camZ = vPos.z + Math.cos(vRot) * camDist;
+    // Add mouse-driven orbit offset (so player can look around while driving)
+    const totalAngle = vRot + vehicle._camOrbit;
+    const camX = vPos.x + Math.sin(totalAngle) * camDist;
+    const camZ = vPos.z + Math.cos(totalAngle) * camDist;
     const targetCam = new THREE.Vector3(camX, vPos.y + camHeight, camZ);
     camera.position.lerp(targetCam, Math.min(1, 8 * dt));
     camera.lookAt(vPos.x, vPos.y + 1, vPos.z);

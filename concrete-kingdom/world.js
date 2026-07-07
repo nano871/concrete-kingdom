@@ -169,21 +169,6 @@ export function buildWorld(scene) {
     addTree(group, tx, tz);
   }
 
-  // ── District boundaries ──
-  const wallMat = new THREE.MeshStandardMaterial({
-    color: 0x222233, transparent: true, opacity: 0.2, side: THREE.DoubleSide,
-  });
-  for (const x of [-40, 40]) {
-    const w = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 80), wallMat);
-    w.position.set(x, 3, 0);
-    group.add(w);
-  }
-  for (const z of [-40, 40]) {
-    const w = new THREE.Mesh(new THREE.BoxGeometry(80, 6, 0.5), wallMat);
-    w.position.set(0, 3, z);
-    group.add(w);
-  }
-
   scene.add(group);
   return { buildings: interiors, buildingData };
 }
