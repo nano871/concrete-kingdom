@@ -209,4 +209,23 @@ export class MissionManager {
 
   getActiveMission() { return this.activeMission; }
   getCompletedCount() { return this.completed.length; }
+
+  /** Get the first uncompleted objective's position (for waypoint guidance). */
+  getCurrentObjectivePos() {
+    if (!this.activeMission) return null;
+    for (const obj of this.activeMission.objectives) {
+      if (!obj.completed && obj.pos) return obj.pos;
+      if (!obj.completed && obj.type === 'escape') return null; // no pos for escape
+    }
+    return null;
+  }
+
+  /** Get the first uncompleted objective's description. */
+  getCurrentObjectiveDesc() {
+    if (!this.activeMission) return null;
+    for (const obj of this.activeMission.objectives) {
+      if (!obj.completed) return obj.desc || obj.description;
+    }
+    return null;
+  }
 }

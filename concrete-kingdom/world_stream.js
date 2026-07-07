@@ -42,14 +42,14 @@ export class WorldStream {
     for (const c of cellsArray) this.defineCell(c.x, c.z, c);
   }
 
-  /** Smooth terrain height at world position using layered sine waves. */
+  /** Smooth terrain height — flat city center, hills on outskirts. */
   _getTerrainHeight(worldX, worldZ) {
     const dx = worldX / 80;
     const dz = worldZ / 80;
-    // Distance from center
+    // Distance from center in cell units
     const dist = Math.sqrt(dx * dx + dz * dz);
-    // Keep center flat (city), hills on the outskirts
-    if (dist < 1.5) return 0;
+    // Expand flat zone to 1.8 cell radius — center 3x3 stays flat for clean roads
+    if (dist < 1.8) return 0;
 
     // Layered sine waves for smooth rolling hills - no jagged steps
     const h1 = Math.sin(dx * 0.8 + this._noiseSeed) * Math.cos(dz * 0.7 + this._noiseSeed) * 4;
@@ -129,12 +129,12 @@ export class WorldStream {
     const ns = new THREE.Mesh(roadGeo(12, this.cellSize), roadMat);
     ns.rotation.x = -Math.PI / 2;
     const nsH = this._getTerrainAt(ox, oz, 0, 0);
-    ns.position.set(ox, nsH + 0.02, oz);
+    ns.position.set(ox, nsH + 0.08, oz);
     group.add(ns);
 
     const ew = new THREE.Mesh(roadGeo(this.cellSize, 12), roadMat);
     ew.rotation.x = -Math.PI / 2;
-    ew.position.set(ox, nsH + 0.02, oz);
+    ew.position.set(ox, nsH + 0.08, oz);
     group.add(ew);
 
     // Lane markings (center dashed lines)
@@ -145,7 +145,7 @@ export class WorldStream {
         const dot = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 1.5), lineMat);
         dot.rotation.x = -Math.PI / 2;
         const dh = this._getTerrainAt(ox, oz, 0, z);
-        dot.position.set(ox, dh + 0.03, oz + z);
+        dot.position.set(ox, dh + 0.1, oz + z);
         group.add(dot);
       }
       // E-W dashed line
