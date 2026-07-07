@@ -153,16 +153,45 @@ export class PoliceController {
    * first move to the player's nearest road point, then close in.
    */
   _roadChaseTarget(playerPos, carPos) {
-    const playerRoad = this._snapToRoad(playerPos);
-    const distToPlayerRoad = carPos.distanceTo(playerRoad);
-    const distToPlayer = carPos.distanceTo(playerPos);
-
-    // If far from the player's road, head to that road first
-    if (distToPlayerRoad > 8 && distToPlayerRoad > distToPlayer * 0.5) {
-      return playerRoad;
+    // Find the waypoint nearest to the player
+    let bestWp = ROAD_WAYPOINTS[0];
+    let bestDist = playerPos.distanceTo(new THREE.Vector3(ROAD_WAYPOINTS[0].x, 0, ROAD_WAYPOINTS[0].z));
+    for (let i = 1; i < ROAD_WAYPOINTS.length; i++) {
+      const wp = new THREE.Vector3(ROAD_WAYPOINTS[i].x, 0, ROAD_WAYPOINTS[i].z);
+      const d = playerPos.distanceTo(wp);
+      if (d < bestDist) { bestDist = d; bestWp = ROAD_WAYPOINTS[i]; }
     }
-    // Otherwise go straight for the player
-    return playerPos.clone();
+
+    // Navigate along waypoints toward the best one
+    // Find the waypoint nearest to the police car
+    let nearestCarIdx = 0;
+    let nearestCarDist = Infinity;
+    for (let i = 0; i < ROAD_WAYPOINTS.length; i++) {
+      const wp = new THREE.Vector3(ROAD_WAYPOINTS[i].x, 0, ROAD_WAYPOINTS[i].z);
+      const d = carPos.distanceTo(wp);
+      if (d < nearestCarDist) { nearestCarDist = d; nearestCarIdx = i; }
+    }
+
+    // Find best target waypoint index
+    let bestTargetIdx = 0;
+    let bestTargetDist = Infinity;
+    for (let i = 0; i < ROAD_WAYPOINTS.length; i++) {
+      const wp = new THREE.Vector3(ROAD_WAYPOINTS[i].x, 0, ROAD_WAYPOINTS[i].z);
+      const d = playerPos.distanceTo(wp);
+      if (d < bestTargetDist) { bestTargetDist = d; bestTargetIdx = i; }
+    }
+
+    // Navigate forward along waypoints toward target
+    const len = ROAD_WAYPOINTS.length;
+    let nextIdx = (nearestCarIdx + 1) % len;
+    // Check if we should go forward or backward along the loop
+    const forwardDist = (bestTargetIdx - nearestCarIdx + len) % len;
+    const backwardDist = (nearestCarIdx - bestTargetIdx + len) % len;
+    if (backwardDist < forwardDist) {
+      nextIdx = (nearestCarIdx - 1 + len) % len; // go backward
+    }
+
+    return new THREE.Vector3(ROAD_WAYPOINTS[nextIdx].x, 0, ROAD_WAYPOINTS[nextIdx].z);
   }
 
   /**

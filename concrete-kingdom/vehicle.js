@@ -14,7 +14,7 @@ export class Vehicle {
     // Physics state
     this.pos = new THREE.Vector3(8, 0.3, 18);  // spawn location
     this.velocity = new THREE.Vector3(0, 0, 0);
-    this.rotY = Math.PI; // facing negative Z initially
+    this.rotY = 0; // facing +Z (matches GLTF convention)
     this.steerAngle = 0;
     this.speed = 0;
 
@@ -43,7 +43,7 @@ export class Vehicle {
     const loader = new GLTFLoader();
     loader.load('/models/porsche.gltf', (gltf) => {
       const model = gltf.scene;
-      model.scale.set(0.5, 0.5, 0.5); // adjust to game scale
+      model.scale.set(0.5, 0.5, 0.5);
       model.position.y = 0.3;
       model.traverse((node) => {
         if (node.isMesh) {
