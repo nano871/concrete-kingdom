@@ -18,8 +18,8 @@ export function buildWorld(scene) {
     bank: texLoader.load('/textures/bank_facade.jpg'),
   };
 
-  // ── Ground base ──
-  const groundGeo = new THREE.PlaneGeometry(120, 120);
+  // ── Ground base (100x100, matches streaming cell boundary) ──
+  const groundGeo = new THREE.PlaneGeometry(100, 100);
   const groundMat = new THREE.MeshStandardMaterial({
     color: 0x3a3a3a, roughness: 0.95, metalness: 0,
   });

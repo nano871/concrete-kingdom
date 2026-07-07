@@ -322,10 +322,6 @@ export class Vehicle {
     }
 
     // ── Visual update ──
-    // — World bounds (keep car inside the walls) —
-    this.pos.x = Math.max(-57, Math.min(57, this.pos.x));
-    this.pos.z = Math.max(-57, Math.min(57, this.pos.z));
-
     this.mesh.position.set(this.pos.x, 0.3, this.pos.z);
     this.mesh.rotation.y = this.rotY;
 
