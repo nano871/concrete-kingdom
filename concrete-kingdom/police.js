@@ -204,8 +204,8 @@ export class PoliceController {
     }
 
     // Clamp to world bounds
-    adjusted.x = Math.max(-55, Math.min(55, adjusted.x));
-    adjusted.z = Math.max(-55, Math.min(55, adjusted.z));
+    adjusted.x = Math.max(-245, Math.min(245, adjusted.x));
+    adjusted.z = Math.max(-245, Math.min(245, adjusted.z));
     return adjusted;
   }
 
@@ -348,8 +348,11 @@ export class PoliceController {
       }
 
       // Bounds
-      car.pos.x = Math.max(-55, Math.min(55, car.pos.x));
-      car.pos.z = Math.max(-55, Math.min(55, car.pos.z));
+      // Bounds
+      car.pos.x = Math.max(-245, Math.min(245, car.pos.x));
+      car.pos.z = Math.max(-245, Math.min(245, car.pos.z));
+
+      // World bounds (expanded for streaming)
 
       // Update mesh
       car.mesh.position.set(car.pos.x, 0.25, car.pos.z);

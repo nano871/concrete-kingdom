@@ -12,6 +12,7 @@ import { TrafficSystem } from './traffic.js';
 import { CombatSystem } from './combat.js';
 import { MissionManager } from './missions.js';
 import { MissionMenu } from './mission_menu.js';
+import { WorldStream } from './world_stream.js';
 
 // ── Setup ──
 const scene = new THREE.Scene();
@@ -111,6 +112,26 @@ missionMenu.onStart = (missionId) => {
     missionMenu.hide();
   }
 };
+
+// ── Expanded World (cell-based streaming) ──
+const worldStream = new WorldStream(scene);
+const mapCells = [];
+for (let x = -2; x <= 2; x++) {
+  for (let z = -2; z <= 2; z++) {
+    if (x === 0 && z === 0) continue;
+    const dist = Math.sqrt(x*x + z*z);
+    mapCells.push({
+      x, z,
+      density: dist <= 1.5 ? 0.6 : 0.3,
+      roadType: dist <= 1.5 ? 'grid' : 'main',
+      hasPark: Math.random() < 0.15,
+      landmarkType: (x === 2 && z === 2) ? 'bank' :
+                     (x === -2 && z === -2) ? 'mall' :
+                     (x === 2 && z === -2) ? 'station' : null,
+    });
+  }
+}
+worldStream.defineMap(mapCells);
 
 // Mouse combat controls
 KEYS['mousedown'] = false;
@@ -536,6 +557,9 @@ function gameLoop(time) {
   // ── Ambient NPCs & Traffic update ──
   pedestrians.update(dt, player.pos);
   traffic.update(dt, player.pos);
+
+  // ── World streaming ──
+  worldStream.update(player.pos);
 
   // ── Combat update ──
   combat.update(dt, KEYS);

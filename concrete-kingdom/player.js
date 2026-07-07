@@ -68,10 +68,10 @@ export class PlayerController {
     const gunMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.3, metalness: 0.6 });
     const slideMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.7, roughness: 0.2 });
     this.gun = new THREE.Group();
-    // Main body
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.1), gunMat);
-    body.castShadow = true;
-    this.gun.add(body);
+    // Gun body
+    const gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.1), gunMat);
+    gunBody.castShadow = true;
+    this.gun.add(gunBody);
     // Barrel
     const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.01, 0.06, 6), gunMat);
     barrel.rotation.x = Math.PI / 2;
@@ -265,8 +265,8 @@ export class PlayerController {
     }
 
     // District bounds
-    newPos.x = Math.max(-57, Math.min(57, newPos.x));
-    newPos.z = Math.max(-57, Math.min(57, newPos.z));
+    newPos.x = Math.max(-245, Math.min(245, newPos.x));
+    newPos.z = Math.max(-245, Math.min(245, newPos.z));
 
     this.pos.copy(newPos);
 

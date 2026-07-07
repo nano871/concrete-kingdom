@@ -285,8 +285,8 @@ export class Vehicle {
     }
 
     // Bounds
-    this.pos.x = Math.max(-58, Math.min(58, this.pos.x));
-    this.pos.z = Math.max(-58, Math.min(58, this.pos.z));
+    this.pos.x = Math.max(-245, Math.min(245, this.pos.x));
+    this.pos.z = Math.max(-245, Math.min(245, this.pos.z));
 
     // ── Building collision ──
     const carRadius = 1.0;
