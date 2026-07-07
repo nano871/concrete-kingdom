@@ -104,10 +104,8 @@ export class WorldStream {
     pos.needsUpdate = true;
     geo.computeVertexNormals(); // smooth lighting
 
-    // Choose material based on height and position
-    const isCity = Math.abs(cell.x) <= 1 && Math.abs(cell.z) <= 1;
-    const mat = isCity ? this.groundMat : this.grassMat;
-    const mesh = new THREE.Mesh(geo, mat);
+    // Choose material (no grass - urban ground everywhere)
+    const mesh = new THREE.Mesh(geo, this.groundMat);
     mesh.receiveShadow = true;
     group.add(mesh);
 
