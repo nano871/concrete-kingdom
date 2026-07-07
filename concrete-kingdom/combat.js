@@ -76,6 +76,9 @@ export class CombatSystem {
     // Muzzle flash
     this.flashMat.opacity = 1;
 
+    // Sound
+    this._audio?.gunshot();
+
     // Raycast
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera({ x: 0, y: 0 }, this.camera);

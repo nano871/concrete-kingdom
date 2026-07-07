@@ -13,6 +13,7 @@ import { CombatSystem } from './combat.js';
 import { MissionManager } from './missions.js';
 import { MissionMenu } from './mission_menu.js';
 import { WorldStream } from './world_stream.js';
+import { AudioEngine } from './audio.js';
 
 // ── Setup ──
 const scene = new THREE.Scene();
@@ -97,12 +98,18 @@ const traffic = new TrafficSystem(scene);
 
 // ── Combat system ──
 const combat = new CombatSystem(scene, camera, player);
+combat._audio = audio;
 
 // ── Mission manager ──
 const missions = new MissionManager(scene);
 
 // ── Mission menu ──
 const missionMenu = new MissionMenu();
+
+// ── Audio engine ──
+const audio = new AudioEngine();
+// Init on first user click (browser autoplay policy)
+document.addEventListener('click', () => audio.init(), { once: true });
 missionMenu.onStart = (missionId) => {
   const m = missions.missions[missionId];
   if (m && m.state === 'available') {
@@ -484,6 +491,12 @@ function gameLoop(time) {
     vehicleInput.brake = KEYS[' '];
     vehicle.update(vehicleInput, dt);
 
+    // Audio: engine sound
+    if (Math.abs(vehicle.speed) > 1) audio.startEngine();
+    else audio.stopEngine();
+
+    // Audio: radio toggle on R when in vehicle (cycle)
+
     // Mouse orbit camera (look around while driving)
     vehicle._camOrbit -= MOUSE.dx * 0.003;
     MOUSE.dx = 0; // consume the movement
@@ -537,6 +550,7 @@ function gameLoop(time) {
     if (nearbyBiz && nearbyBiz.state !== 'player-owned') {
       const loot = 50 + Math.floor(Math.random() * 150);
       money += loot;
+      audio.cashPickup();
       STATE.heat = Math.min(3, STATE.heat + 1);
       document.body.style.border = '3px solid #ffaa44';
       document.getElementById('status').textContent = `+$${loot} LOOTED!`;
@@ -583,6 +597,14 @@ function gameLoop(time) {
 
   // ── Combat update ──
   combat.update(dt, KEYS);
+
+  // ── Audio updates ──
+  // Siren when police are active
+  if (STATE.heat > 0 && Math.random() < dt * 2) audio.siren();
+  // Ambient city sounds
+  audio.updateAmbient(dt, isNight);
+  // Radio while in vehicle
+  if (inVehicle) audio.updateRadio(dt);
 
   // ── Render frame ──
   composer.render();
