@@ -233,19 +233,91 @@ export class WorldStream {
   }
 
   _makeBuilding(w, h, d, color, district) {
+    const group = new THREE.Group();
+    const isTall = h > 10;
+
+    // Main body
     const mat = new THREE.MeshStandardMaterial({
       color, roughness: district === 'industrial' ? 0.9 : 0.6,
       metalness: district === 'commercial' ? 0.3 : 0.1,
     });
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-    // Roof (flat with slight overhang)
-    const roofMat = new THREE.MeshStandardMaterial({
-      color: 0x333344, roughness: 0.9,
+    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    body.castShadow = true;
+    group.add(body);
+
+    // ── 3D window frames (recessed boxes on front/back faces) ──
+    const windowMat = new THREE.MeshStandardMaterial({
+      color: 0x222233, emissive: 0xffdd88, emissiveIntensity: 0.2,
+      roughness: 0.1, metalness: 0.5,
     });
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(w * 0.95, 0.2, d * 0.95), roofMat);
-    roof.position.y = h / 2 + 0.1;
-    mesh.add(roof);
-    return mesh;
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: 0x444455, roughness: 0.6, metalness: 0.2,
+    });
+    const stories = Math.min(Math.floor(h / 3), 5);
+    const windowsPerSide = Math.floor(w / 2.5);
+    for (let story = 0; story < stories; story++) {
+      for (let wi = 0; wi < windowsPerSide; wi++) {
+        const wx = -w / 2 + (wi + 0.5) * (w / (windowsPerSide + 0.5));
+        const wy = -h / 2 + 1.5 + story * (h / stories) + 0.3;
+        // Window glass (recessed)
+        const win = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.6), windowMat);
+        win.position.set(wx, wy, d / 2 + 0.005);
+        group.add(win);
+        // Window frame (raised border)
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.03), frameMat);
+        frame.position.set(wx, wy, d / 2 + 0.01);
+        group.add(frame);
+        // Mirror on back face
+        const winB = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.6), windowMat);
+        winB.position.set(wx, wy, -d / 2 - 0.005);
+        winB.rotation.y = Math.PI;
+        group.add(winB);
+        const frameB = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.03), frameMat);
+        frameB.position.set(wx, wy, -d / 2 - 0.01);
+        group.add(frameB);
+      }
+    }
+
+    // ── Horizontal ledges between floors ──
+    if (stories > 1) {
+      const ledgeMat = new THREE.MeshStandardMaterial({
+        color: 0x555566, roughness: 0.7,
+      });
+      for (let s = 1; s < stories; s++) {
+        const ly = -h / 2 + s * (h / stories);
+        const ledge = new THREE.Mesh(new THREE.BoxGeometry(w + 0.1, 0.06, d + 0.1), ledgeMat);
+        ledge.position.y = ly;
+        group.add(ledge);
+      }
+    }
+
+    // ── Roof parapet ──
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x333344, roughness: 0.9 });
+    const parapet = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, 0.15, d + 0.3), roofMat);
+    parapet.position.y = h / 2 + 0.075;
+    group.add(parapet);
+
+    // ── Roof details ──
+    if (isTall) {
+      // AC unit
+      const acMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.8 });
+      const ac = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.25), acMat);
+      ac.position.set(w * 0.2, h / 2 + 0.2, 0);
+      group.add(ac);
+      // Antenna
+      const antMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8 });
+      const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.02, 0.4, 4), antMat);
+      ant.position.set(-w * 0.3, h / 2 + 0.3, d * 0.2);
+      group.add(ant);
+    }
+
+    // ── Entrance (at ground level, front face) ──
+    const doorMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.5 });
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.02), doorMat);
+    door.position.set(0, -h / 2 + 0.35, d / 2 + 0.005);
+    group.add(door);
+
+    return group;
   }
 
   _addPark(group, ox, oz) {
