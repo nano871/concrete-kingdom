@@ -14,6 +14,7 @@ import { MissionManager } from './missions.js';
 import { MissionMenu } from './mission_menu.js';
 import { WorldStream } from './world_stream.js';
 import { AudioEngine } from './audio.js';
+import { StreetRace } from './racing.js';
 
 // ── Setup ──
 const scene = new THREE.Scene();
@@ -108,6 +109,9 @@ const missionMenu = new MissionMenu();
 
 // ── Audio engine ──
 const audio = new AudioEngine();
+
+// ── Street racing ──
+const racing = new StreetRace(scene);
 // Init on first user click (browser autoplay policy)
 document.addEventListener('click', () => audio.init(), { once: true });
 missionMenu.onStart = (missionId) => {
@@ -369,6 +373,10 @@ function gameLoop(time) {
   const gunShopPos = new THREE.Vector3(26, 0, -5.5);
   const nearGunShop = player.pos.distanceTo(gunShopPos) < 4;
 
+  // Race start detection
+  const raceStartPos = new THREE.Vector3(0, 0, -30);
+  const nearRaceStart = player.pos.distanceTo(raceStartPos) < 4;
+
   if (KEYS['e'] && !player._eWasPressed) {
     if (inVehicle) {
       vehicle.exit();
@@ -397,6 +405,17 @@ function gameLoop(time) {
       player.camera.lookAt(26, 2, -3);
       interactPrompt.textContent = '[E] Exit Shop  |  [1] Buy Pistol $200  |  [2] Buy Rifle $800';
       interactPrompt.style.display = 'block';
+    } else if (nearRaceStart && inVehicle && !racing.active) {
+      // Start race with $200 bet
+      if (money >= 200) {
+        money -= 200;
+        racing.start(200);
+        document.getElementById('status').textContent = 'RACE STARTED! Follow the green checkpoints.';
+        audio.cashPickup();
+      } else {
+        document.getElementById('status').textContent = 'NEED $200 TO RACE';
+        setTimeout(() => {}, 1000);
+      }
     } else if (missions.update(player.pos)) {
       // Near mission marker
       const marker = missions.nearbyMarker;
@@ -459,12 +478,15 @@ function gameLoop(time) {
   } else if (nearVehicle) {
     interactPrompt.style.display = 'block';
     interactPrompt.textContent = '[E] Enter Vehicle';
-  } else if (nearBank) {
-    interactPrompt.style.display = 'block';
-    interactPrompt.textContent = '[E] Enter Bank';
   } else if (nearGunShop) {
     interactPrompt.style.display = 'block';
     interactPrompt.textContent = '[E] Enter Gun Shop';
+  } else if (nearRaceStart && inVehicle && !racing.active) {
+    interactPrompt.style.display = 'block';
+    interactPrompt.textContent = '[E] Race for $200';
+  } else if (nearBank && !inBank) {
+    interactPrompt.style.display = 'block';
+    interactPrompt.textContent = '[E] Enter Bank';
   } else if (nearBusiness && !KEYS['e']) {
     interactPrompt.style.display = 'block';
     const bizStatus = nearBusiness.state === 'player-owned' ? 'OWNED' : `${(nearBusiness.captureProgress * 100).toFixed(0)}%`;
@@ -605,6 +627,25 @@ function gameLoop(time) {
   audio.updateAmbient(dt, isNight);
   // Radio while in vehicle
   if (inVehicle) audio.updateRadio(dt);
+
+  // ── Street race update ──
+  if (racing.active) {
+    const pPos = inVehicle ? vehicle.pos : player.pos;
+    const result = racing.update(pPos, dt);
+    const progress = racing.getProgress();
+    if (progress) {
+      document.getElementById('status').textContent =
+        `RACE | CP ${progress.checkpoint + 1}/${progress.total} | ${progress.time.toFixed(1)}s`;
+    }
+    if (racing.finished) {
+      const finishResult = racing._finish();
+      money += finishResult.reward;
+      document.getElementById('status').textContent = `RACE FINISHED! +$${finishResult.reward} (${finishResult.time.toFixed(1)}s)`;
+      document.body.style.border = '3px solid #44ff44';
+      setTimeout(() => document.body.style.border = '', 2000);
+      audio.cashPickup();
+    }
+  }
 
   // ── Render frame ──
   composer.render();
