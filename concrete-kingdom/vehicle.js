@@ -45,6 +45,8 @@ export class Vehicle {
       const model = gltf.scene;
       model.scale.set(0.5, 0.5, 0.5);
       model.position.y = 0.3;
+      // Rotate model 180° so front faces -Z (matching physics direction)
+      model.rotation.y = Math.PI;
       model.traverse((node) => {
         if (node.isMesh) {
           node.castShadow = true;
@@ -52,9 +54,14 @@ export class Vehicle {
         }
       });
 
-      // Remove placeholder, add model
+      // Wrap in a group so the model keeps its rotation
+      // while the group's rotation is set by the physics
+      const wrapper = new THREE.Group();
+      wrapper.add(model);
+
+      // Remove placeholder, add wrapper
       this.scene.remove(this.mesh);
-      this.mesh = model;
+      this.mesh = wrapper;
       this.modelLoaded = true;
       this.mesh.position.copy(this.pos);
       this.mesh.rotation.y = this.rotY;
