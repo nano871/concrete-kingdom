@@ -129,12 +129,12 @@ export class WorldStream {
     const ns = new THREE.Mesh(roadGeo(12, this.cellSize), roadMat);
     ns.rotation.x = -Math.PI / 2;
     const nsH = this._getTerrainAt(ox, oz, 0, 0);
-    ns.position.set(ox, nsH + 0.08, oz);
+    ns.position.set(ox, nsH + 0.04, oz);
     group.add(ns);
 
     const ew = new THREE.Mesh(roadGeo(this.cellSize, 12), roadMat);
     ew.rotation.x = -Math.PI / 2;
-    ew.position.set(ox, nsH + 0.08, oz);
+    ew.position.set(ox, nsH + 0.04, oz);
     group.add(ew);
 
     // Lane markings (center dashed lines)
@@ -145,7 +145,7 @@ export class WorldStream {
         const dot = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 1.5), lineMat);
         dot.rotation.x = -Math.PI / 2;
         const dh = this._getTerrainAt(ox, oz, 0, z);
-        dot.position.set(ox, dh + 0.1, oz + z);
+        dot.position.set(ox, dh + 0.06, oz + z);
         group.add(dot);
       }
       // E-W dashed line
