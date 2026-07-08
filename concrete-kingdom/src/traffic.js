@@ -15,6 +15,7 @@ export class TrafficSystem {
     this.scene = scene;
     this.cars = [];
     this.maxCars = 12;
+    this.isNight = false;
     this.spawnTimer = 0;
 
     this.roads = [
@@ -111,8 +112,13 @@ export class TrafficSystem {
   }
 
   update(dt, playerPos) {
+    // Time-of-day traffic density
+    const nightMult = this.isNight ? 0.4 : 1.0;
+    const effectiveMax = Math.floor(this.maxCars * nightMult);
+
     this.spawnTimer += dt;
-    if (this.spawnTimer > 2 && this.cars.length < this.maxCars) {
+    const spawnInterval = this.isNight ? 5 : 2;
+    if (this.spawnTimer > spawnInterval && this.cars.length < effectiveMax) {
       this.spawnTimer = 0;
       if (playerPos.distanceTo(new THREE.Vector3(0, 0, 0)) < 60) {
         this._spawnCar();

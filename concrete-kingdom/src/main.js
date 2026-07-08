@@ -611,7 +611,9 @@ function gameLoop(time) {
   // ── Ambient NPCs & Traffic update ──
   pedestrians._playerSpeed = STATE.speed;
   pedestrians._playerInVehicle = inVehicle;
+  pedestrians.isNight = isNight;
   pedestrians.update(dt, player.pos);
+  traffic.isNight = isNight;
   traffic.update(dt, player.pos);
 
   // ── World streaming ──

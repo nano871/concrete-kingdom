@@ -98,8 +98,13 @@ export class PedestrianSystem {
   }
 
   update(dt, playerPos) {
+    // Time-of-day density (from GTA V research)
+    const nightMultiplier = this.isNight ? 0.4 : 1.0;
+    const effectiveMax = Math.floor(this.maxPeds * nightMultiplier);
+
     this.spawnTimer += dt;
-    if (this.spawnTimer > 3 && this.pedestrians.length < this.maxPeds) {
+    const spawnInterval = this.isNight ? 6 : 3;
+    if (this.spawnTimer > spawnInterval && this.pedestrians.length < effectiveMax) {
       this.spawnTimer = 0;
       const nearWaypoint = this.waypoints.some(wp => wp.distanceTo(playerPos) < 30);
       if (nearWaypoint) this._spawnPedestrian();
